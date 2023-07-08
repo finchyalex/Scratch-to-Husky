@@ -33,7 +33,7 @@ def convertCommand(commandinput,husky_target):
 
         SubStackHasNext = True
         Substack = []
-        Substack.append("REPEAT")
+        Substack.append("REPEAT" + " " + str(times))
         #Substack[1] contains the first ID of the command in the substack
         #We should get this from the husky_target
         InitialSubStackID = substack[1]
@@ -53,7 +53,7 @@ def convertCommand(commandinput,husky_target):
             Substack.append(husky_command[0] + " " + str(CurrentCommand["inputs"][husky_command[1]][1][1]))
         
         #We can end out substack by adding a number of repeats this code should be repeated
-        NewTimingStructure = "TIMES " + str(times)
+        NewTimingStructure = "END"
         Substack.append(NewTimingStructure)
         return Substack
             

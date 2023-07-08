@@ -2,3 +2,6 @@
 /Test
 /Test.sb3
 /__pycache__
+/venv
+*__pycache__
+*.py[cod]
