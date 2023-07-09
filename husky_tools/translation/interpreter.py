@@ -16,7 +16,7 @@
 from ..husky.husky import Husky
 
 class Interpreter:
-    def __init__(self, file_name, unit_of_length, target_husky=None, output_location=None):
+    def __init__(self, file_name, unit_of_length, target_husky : Husky, output_location=None):
         if(output_location) == None:
             self.output_location = file_name.split(".")[0] + ".py"
         if(target_husky == None):
@@ -65,6 +65,8 @@ class Interpreter:
             return True
         
     def interpret(self,write_to_file=False):
+        if(not self.__validate__):
+            print("Syntax error")
         file = open(self.file_name, "r")
         lines = file.readlines()
         self.run(lines)

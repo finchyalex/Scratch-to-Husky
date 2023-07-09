@@ -8,6 +8,8 @@ def convertCommand(commandinput,husky_target):
         "control_wait" : ["WAIT", "DURATION"],
         "control_repeat" : ["REPEAT", "TIMES"]
         #Add additional opcodes, and their inputs and the value the inputs represent
+        #Work on a simple for variables and if statements
+        #This will allow for better sensing and control
     }
 
 
@@ -18,7 +20,7 @@ def convertCommand(commandinput,husky_target):
 
 
     #We have to do something unique for the repeat command
-    if commandinput["opcode"] == "control_repeat":
+    if commandinput["opcode"] == "control_repeat": #TODO Redo this to allow for nested repeats
         #We have to get the number of times to repeat
         #Everything inside the substack should be repeated by the number of times
         #Get the number of times to repeat
