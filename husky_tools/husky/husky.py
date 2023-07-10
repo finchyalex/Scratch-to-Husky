@@ -5,8 +5,6 @@ class Husky:
 
     def __init__(self,HOST_IP,HOST_PORT,BOUNDS_WIDTH,BOUNDS_HEIGHT):
 
-
-
         self.husky_ros = roslibpy.Ros(host=HOST_IP, port=HOST_PORT)
         #Attempt to connect to the ros server
         print("Attempting to connect to: " + HOST_IP + ":" + str(HOST_PORT))
@@ -25,7 +23,7 @@ class Husky:
         self.husky_odometry_subscriber.subscribe(self.odometry_callback)
         self.BOUDS_WIDTH = BOUNDS_WIDTH
         self.BOUNDS_HEIGHT = BOUNDS_HEIGHT
-        #We will need some way to store the location and ensure it doesn't leave the bounds
+        #We will need some way to store the location and ensure it doesn't leave the bounds, maybe swap out my system for the Odom system later
         
 
     def move(self, distance):

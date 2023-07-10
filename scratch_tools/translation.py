@@ -32,7 +32,7 @@ def convertCommand(commandinput,husky_target):
         #Get everything in the substack
         
         #Run through the commands in the substack starting with substack[1]
-
+        
         SubStackHasNext = True
         Substack = []
         Substack.append("REPEAT" + " " + str(times))
