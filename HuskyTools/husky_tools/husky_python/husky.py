@@ -34,7 +34,7 @@ class Husky:
 
     #Callback for the odometry topic
     def odom_callback(self,msg):
-        self.odom = msg0
+        self.odom = msg
         self.rotation = self.get_rotation(msg)
 
     def get_rotation(self,msg):
