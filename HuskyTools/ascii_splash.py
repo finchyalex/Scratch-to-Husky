@@ -2,9 +2,30 @@
 import os
 import time
 
+RESET = "\033[0"
+SLOWBLINK = "\033[5m"
+RAPIDBLINK = "\033[6m"
+NOBLINK = "\033[25m"
+BOLD = "\033[1m"
+GREENFG = "\033[32m"
+BLACKBG = "\033[40m"
+WHITEBG = "\033[107m"
+GRAYFG = "\033[37m"
+GREYBG = "\033[47m"
+BLACKFG = "\033[30m"
+REDFG = "\033[31m"
+WHITEFG = "\033[97m"
+GREYFG = "\033[90m"
+CYANFG = "\033[36m"
+MAGENTAFG = "\033[35m"
+BLUEFG = "\033[34m"
+BRIGHTMAGENTAFG = "\033[95m"
+BRIGHTBLUEFG = "\033[94m"
+BRIGHTREDBG = "\033[41m"
+
 def DisplaySplash():
 
-    splash_text = """
+    splash_text = BRIGHTMAGENTAFG + """
   _    _           _       _______          _     
  | |  | |         | |     |__   __|        | |    
  | |__| |_   _ ___| | ___   _| | ___   ___ | |___ 

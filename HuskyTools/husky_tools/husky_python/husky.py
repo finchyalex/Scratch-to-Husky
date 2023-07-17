@@ -2,8 +2,10 @@ import rospy
 import time
 import os
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 import datetime
-
+import math
+from tf.transformations import  euler_from_quaternion
 
 class Husky:
 
@@ -14,7 +16,20 @@ class Husky:
         self.BOUNDS_WIDTH = BOUNDS_WIDTH
         self.BOUNDS_HEIGHT = BOUNDS_HEIGHT
         self.ip = husky_ip
+        #Subscribe to the odometry topic
+        self.odom_sub = rospy.Subscriber('/odometry/filtered', Odometry, self.odom_callback)
+        self.odom = Odometry()
 
+    #Callback for the odometry topic
+    def odom_callback(self,msg):
+        self.odom = msg
+        self.rotation = self.get_rotation(msg)
+
+    def get_rotation(self,msg):
+        orientation_q = msg.pose.pose.orientation
+        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+        return yaw
     
     def move(self,linear,angular):
         print("Moving")
@@ -44,6 +59,82 @@ class Husky:
             self.rate.sleep()
         self.pub.publish(twist)
 
+    def MoveForward(self,distance):
+        #Use Odometry to move forward
+        #Move forward  for a certain distance
+        distance_to_move = distance
+        twist = Twist()
+        twist.linear.x = 2
+        current_x = self.odom.pose.pose.position.x
+        current_y = self.odom.pose.pose.position.y
+        print("Current X: {}".format(current_x), "Current Y: {}".format(current_y))
+        #Move forward until the distance is reached
+        while(distance_to_move > 0):
+            self.pub.publish(twist)
+            self.rate.sleep()
+            distance_to_move = distance - math.sqrt((self.odom.pose.pose.position.x - current_x)**2 + (self.odom.pose.pose.position.y - current_y)**2)
+            print(distance_to_move)
+        twist.linear.x = 0
+        self.pub.publish(twist)
+
+    def MoveBackward(self,distance):
+        #Use Odometry to move backward
+        #Move backward for a certain distance
+        distance_to_move = distance
+        twist = Twist()
+        twist.linear.x = -2
+        current_x = self.odom.pose.pose.position.x
+        current_y = self.odom.pose.pose.position.y
+        #Move backward until the distance is reached
+        while(distance_to_move > 0):
+            self.pub.publish(twist)
+            self.rate.sleep()
+            distance_to_move = distance - math.sqrt((self.odom.pose.pose.position.x - current_x)**2 + (self.odom.pose.pose.position.y - current_y)**2)
+            print(distance_to_move)
+        twist.linear.x = 0
+        self.pub.publish(twist)
+
+
+
+    def Rotate(self,angle): #Rotate the husky by a certain angle
+
+        #Use the current angle and the target angle to calculate the angle to rotate
+        #Use Odometry to rotate
+        #Rotate until the angle is reached
+        twist = Twist()
+        vel = 1
+        current_angle = self.rotation
+        input_angle = angle*math.pi/180
+        target_rad = current_angle + input_angle
+    
+
+        while not rospy.is_shutdown():
+            #quat = quaternion_from_euler (roll, pitch,yaw)
+            #print quat
+            twist.angular.z = vel * (target_rad-self.rotation)
+            self.pub.publish(twist)
+            print("taeget={} current:{}", target_rad,self.rotation)
+            self.rate.sleep()
+
+    def RotateConstant(self,angle):
+        twist = Twist()
+        vel = 1
+        current_angle = self.rotation
+        input_angle = angle*math.pi/180
+        target_rad = current_angle + input_angle
+        res = 0.1
+
+        while not rospy.is_shutdown():
+            if(target_rad-self.rotation < res):
+                break
+            #quat = quaternion_from_euler (roll, pitch,yaw)
+            #print quat
+            twist.angular.z = vel
+            self.pub.publish(twist)
+            print("taeget={} current:{}", target_rad,self.rotation)
+            self.rate.sleep()
+
+            
 
         
         

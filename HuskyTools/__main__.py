@@ -8,7 +8,7 @@ from husky_tools.husky_python.husky import Husky
 import time
 from ascii_splash import DisplaySplash
 import threading
-
+import math
 
 RESET = "\033[0"
 SLOWBLINK = "\033[5m"
@@ -32,38 +32,198 @@ BRIGHTBLUEFG = "\033[94m"
 BRIGHTREDBG = "\033[41m"
 
 
-def FirstMenu():
+def FirstMenu(): #Maybe split these into seperate functions
+    while(True):
+        #Switch statement for the menu
+        print("Welcome to the HuskyTools menu")
+        print("Here are your options:")
+        print("1. Scan and connect to husky")
+        print("2. Load previous config and connect to husky")
+        print("3. Exit")
+        choice = input("Enter your choice: ")
+        if(choice == "1"):
+            #Check if permissions are correct, if not attempt to fix them
+            husky = ScanForHusky()
+            return husky
+        elif(choice == "2"):
+            #Check the folder ~/.husky_tools for a config file
+            #If the config file exists, load it
+            #If the config file does not exist, exit
+            #First check directory exists, if not create it
+            if(not os.path.exists(os.path.expanduser("~/.husky_tools"))):
+                os.mkdir(os.path.expanduser("~/.husky_tools"))
+            #Check if the config file exists, if not exit
+            #The file name will be config-<husky_ip> so check for all files starting with config-
+            config_files = os.listdir(os.path.expanduser("~/.husky_tools"))
+            config_file_found = False
+            config_files_found = []
+            for file in config_files:
+                if(file.startswith("config-")):
+                    config_file_found = True
+                    config_files_found.append(file)
+            if(not config_file_found):
+                print("No config files found")
+                exit()
+            #If there is more than one config file, ask the user which one to use
+            if(len(config_files_found) > 1):
+                print("Multiple config files found, please choose one:")
+                for i in range(0,len(config_files_found)):
+                    print(str(i) + ". " + config_files_found[i])
+                choice = input("Enter your choice: ")
+                config_file = config_files_found[int(choice)]
+            else:
+                config_file = config_files_found[0]
+            #Load the config file
+            with open(os.path.expanduser("~/.husky_tools/" + config_file),"r") as f:
+                #Read the file
+                config = f.readlines()
+                #Set the ROS master URI
+                os.environ["ROS_MASTER_URI"] = config[0].split("=")[1]
+                #Set the ROS IP
+                os.environ["ROS_IP"] = config[1].split("=")[1]
+            #Check if the husky is still connected
+            husky_ip = os.environ["ROS_MASTER_URI"].split("//")[1].split(":")[0]
+            print("Checking if husky is still connected...")
+            HuskyConnected = CheckPort(husky_ip,11311)
+            if(not HuskyConnected):
+                print("Husky not found, exiting")
+                exit()
+            else:
+                print("Husky connected")
+                husky = Husky(10,10,husky_ip)
+                return husky
 
-    #Switch statement for the menu
-    print("Welcome to the HuskyTools menu")
-    print("Here are your options:")
-    print("1. Scan and connect to husky")
-    print("2. Load previous config and connect to husky")
-    print("3. Exit")
-    choice = input("Enter your choice: ")
-    if(choice == "1"):
-        #Check if permissions are correct, if not attempt to fix them
-        
 
-        husky = ScanForHusky()
-        return husky
-    elif(choice == "2"):
-        print("Not implemented yet")
-        exit()
-    elif(choice == "3"):
-        exit()
+
+            exit()
+        elif(choice == "3"):
+            exit()
+        else:
+            print("Invalid choice")
+            time.sleep(1)
+            #Clear the screen
+            os.system("clear")
+            #Display the menu again
 
 def ConnectedMenu(husky):
-    #How can I make this text green?
-    print(GREENFG + "Husky Connected -- IP: " + husky.ip)
-    print(WHITEFG + "Here are your options:")
-    print("1. Run a program from Scratch")
-    print("2. Run a program from a .husky file")
-    print("3. Run a program from a .py file")
-    print("4. Enter HuskyTools shell")
-    print("3. Exit")
+    while(True):
+        #How can I make this text green?
+        print(GREENFG + "Husky Connected -- IP: " + husky.ip)
+        print(WHITEFG + "Here are your options:")
+        print("1. Run a program from .sb3 (Scratch)")
+        print("2. Run a program from a .husky file")
+        print("3. Run a program from a .py file")
+        print("4. Enter HuskyTools Shell")
+        print("5. Save config and exit")
+        print("6. Exit")
+        choice = input("Enter your choice: ")
+        if(choice == "1"):
+            print("Not implemented yet")
+            exit()
+        elif(choice == "2"):
+            print("Not implemented yet")
+            exit()
+        elif(choice == "3"):
+            print("Not implemented yet")
+            exit()
+        elif(choice == "4"):
+            husky_shell = HuskyShell(husky)
+        elif(choice == "5"):
+            #Get the Husky IP
+            husky_ip = husky.ip
+            #Save this ROS master URI to a file
+            #Create a new directory if it does not exist
+            if(not os.path.exists(os.path.expanduser("~/.husky_tools"))):
+                os.mkdir(os.path.expanduser("~/.husky_tools"))
+            #Create a new file if it does not exist, the filename should be config-<husky_ip>
+            if(not os.path.exists(os.path.expanduser("~/.husky_tools/config-" + husky_ip))):
+                open(os.path.expanduser("~/.husky_tools/config-" + husky_ip),"w+")
+            #Write the ROS master URI to the file
+            with open(os.path.expanduser("~/.husky_tools/config-" + husky_ip),"w") as f:
+                f.write("ROS_MASTER_URI=" + os.environ["ROS_MASTER_URI"] + "\n")
+                f.write("ROS_IP=" + os.environ["ROS_IP"] + "\n")
+            #Exit
+            print("Config saved to ~/.husky_tools/config-" + husky_ip)
+            exit()
+        elif(choice == "6"):
+            #Exit the shell
+            break
+        else:
+            print("Invalid choice")
+            time.sleep(1)
+            #Clear the screen
+            os.system("clear")
+            #Display the menu again
+
+        
+    
+class HuskyShell(): #AT SOME POINT WRITE PROPER COMMAND PARSEING
+
+    def __init__(self,husky):
+        self.husky = husky
+        while(True):
+            print("Starting HuskyTools Shell:")
+            print("--------------------------")
+            print("Type 'help' for a list of commands")
+            command_input = input("Command > ")
+            #Split the command into a list
+            command = command_input.split(" ")
+            #Get the command
+            command = command[0]
+            arguments = command_input.split(" ")
+            arguments.pop(0)
+            if(command == "help"):
+                self.DisplayHelp()
+            elif(command == "move"):
+                #Move the husky
+                #Get the distance
+                distance = int(arguments[0])
+                if(distance > 0):
+                    self.husky.MoveForward(distance)
+                else:
+                    self.husky.MoveBackward(abs(distance))
+            elif(command == "exit"):
+                exit()
+            elif(command == "rotate"):
+                #Rotate the husky
+                #Get the angle
+                angle = arguments[0]
+                self.Rotate(int(angle))
+
+
     
 
+    def CreateProgram(self):
+        #Create a new program
+        #TODO
+        pass
+    
+    def LoadProgram(self):
+        #Load a program
+        #TODO
+        pass
+
+    def SaveProgram(self):
+        #Save a program
+        #TODO
+        pass
+
+    def RunProgram(self):
+        #Run a program
+        #TODO
+        pass
+    
+    def DisplayHelp(self):
+        pass
+
+
+    #Movement commands
+    def MoveForward(self,distance):
+        self.husky.MoveForward(distance)
+
+    def Rotate(self,angle):
+        self.husky.Rotate(angle)
+    
 
     #Run thread that checks for husky connection
 #TODO Fix this
@@ -78,13 +238,21 @@ def CheckConnection(husky,status : dict):
         
 
 def ScanForHusky():
-    print("Scanning for husky...")
-    #Get the IP of the laptop, assume the husky is on the same subnet
-    print("Getting IP of laptop...")
+    print("-Starting Husky Scan-")
+
+
+
+    #Get the IP of the used device, assume the husky is on the same subnet
+    print("Getting IP of of current device...")
     laptop_ip = get_IP()
-    print("Laptop IP: " + laptop_ip)
+    print("Device IP: " + laptop_ip)
+    #Ask if we should check the local device
+    local_check = False
+    check_local = input("Check local device? (y/n): ")
+    if(check_local == "y"):
+        local_check = True
     print("Scanning subnet for husky...")
-    husky_ip = scan(laptop_ip,30,False,include_laptop=True)
+    husky_ip = scan(laptop_ip,30,False,include_laptop=local_check)
     if(husky_ip == ""):
         print("Husky not found")
         #Allow user to enter IP manually if husky is not found
