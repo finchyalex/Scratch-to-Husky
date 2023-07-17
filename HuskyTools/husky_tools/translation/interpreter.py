@@ -13,7 +13,7 @@
 #To Initialize the interpreter, you must pass in the file name of the .husky file
 #The interpreter must also be passed a value to represent a unit of length, for example, 1 unit of length could be 1 inch
 
-from ..husky.husky import Husky
+from ..husky_python.husky import Husky
 
 class Interpreter:
     def __init__(self, file_name, unit_of_length, target_husky : Husky, output_location=None):
@@ -71,7 +71,7 @@ class Interpreter:
         lines = file.readlines()
         self.run(lines)
 
-    def run(self, lines : list[str]):
+    def run(self, lines):
         husky : Husky = self.target_husky 
         
         #For each line, either run it on the husky or write it to the output file
@@ -80,11 +80,16 @@ class Interpreter:
 
         for line in lines:
             if(line.split(" ")[0] == "MOVE"):
-                husky.move(int(line.split(" ")[1]) * self.unit_of_length)
+                #Get the distance to move
+                distance = float(line.split(" ")[1])
+                if(distance > 0):
+                    husky.MoveForward(distance*self.unit_of_length)
+                elif(distance < 0):
+                    husky.MoveBackward(distance*self.unit_of_length)
             elif(line.split(" ")[0] == "TURN"):
-                husky.turn(int(line.split(" ")[1]))
+                husky.Rotate(float(line.split(" ")[1]))
             elif(line.split(" ")[0] == "WAIT"):
-                husky.wait(int(line.split(" ")[1]))
+                husky.wait(float(line.split(" ")[1]))
             elif(line.split(" ")[0] == "REPEAT"):
                 #Only repeat the lines in the REPEAT block
                 #It starts with REPEAT and ends with END

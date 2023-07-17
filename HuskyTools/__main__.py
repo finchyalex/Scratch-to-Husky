@@ -5,10 +5,11 @@ import scapy.all as scapy
 import socket
 import os
 from husky_tools.husky_python.husky import Husky
+from husky_tools.translation.interpreter import Interpreter
 import time
 from ascii_splash import DisplaySplash
 import threading
-import math
+import math 
 
 RESET = "\033[0"
 SLOWBLINK = "\033[5m"
@@ -89,8 +90,17 @@ def FirstMenu(): #Maybe split these into seperate functions
                 print("Husky not found, exiting")
                 exit()
             else:
+                #This seems to be causing issues TODO FIX THIS
                 print("Husky connected")
                 husky = Husky(10,10,husky_ip)
+                print("Setting ROS master URI...")
+                #Set the ROS master URI
+                os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
+                #Set the ROS IP
+                laptop_ip = get_IP()
+                os.environ["ROS_IP"] = laptop_ip
+                print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
+                print("ROS IP set to: " + os.environ["ROS_IP"])
                 return husky
 
 
@@ -118,11 +128,21 @@ def ConnectedMenu(husky):
         print("6. Exit")
         choice = input("Enter your choice: ")
         if(choice == "1"):
-            print("Not implemented yet")
-            exit()
+            #Enter the location of the .sb3 file
+            pass
         elif(choice == "2"):
-            print("Not implemented yet")
-            exit()
+            #Please enter location of .husky file
+            file_loc = input("Enter location of .husky file: ")
+            #Check if the file exists
+            #If the file does not exist, print error message and exit
+            #If the file exists, run the program
+            if(not os.path.exists(file_loc)):
+                print("File does not exist")
+            elif(not file_loc.endswith(".husky")):
+                print("File is not a .husky file")
+            else:
+                interpreter = Interpreter(file_loc,1,husky)
+                interpreter.interpret()
         elif(choice == "3"):
             print("Not implemented yet")
             exit()
@@ -252,7 +272,8 @@ def ScanForHusky():
     if(check_local == "y"):
         local_check = True
     print("Scanning subnet for husky...")
-    husky_ip = scan(laptop_ip,30,False,include_laptop=local_check)
+    #husky_ip = scan(laptop_ip,30,True,include_laptop=local_check)
+    husky_ip = "10.10.120.159" #TEMPORARY
     if(husky_ip == ""):
         print("Husky not found")
         #Allow user to enter IP manually if husky is not found
@@ -271,6 +292,12 @@ def ScanForHusky():
         print("Husky IP invalid")
         husky_ip = input("Enter husky IP: ")
         Valid_Husky = CheckPort(husky_ip,11311)
+        if(not Valid_Husky):
+            override = input("Do you want to override this? (Press enter to exit)")
+            if(override == "y"):
+                Valid_Husky = True
+            else:
+                Valid_Husky = False
 
     print("Husky IP valid")
     print("Setting ROS master URI...")
@@ -281,6 +308,10 @@ def ScanForHusky():
     print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
     print("ROS IP set to: " + os.environ["ROS_IP"])
     #Start the husky
+    #Also print out the Linux commands if it does not work
+    print("Can't connect to husky? run this in the terminal:")
+    print("export ROS_MASTER_URI=" + os.environ["ROS_MASTER_URI"])
+    print("export ROS_IP=" + os.environ["ROS_IP"])
     husky = Husky(10,10,husky_ip) #This may change when I redo the husky class
     return husky
 
@@ -299,8 +330,8 @@ def main():
 
     
 
-def scan(laptop_ip,timeout_limit=30,show_devices=False,include_laptop=True):
-    timeout = 10
+def scan(laptop_ip,timeout_limit=1,show_devices=False,include_laptop=True):
+    timeout = 1
     Searching = True
     #Start by checking laptop IP if include_laptop is true
     if(include_laptop):
@@ -348,21 +379,22 @@ def scan(laptop_ip,timeout_limit=30,show_devices=False,include_laptop=True):
 
     return Husky_IP
 
-def CheckPort(ip,port):
-    #Check if the port is open
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(0.01)
-    result = sock.connect_ex((ip,port))
-    if result == 0:
-        return True
+def CheckPort(host,port,timeout=2):
+    sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    try:
+       sock.connect((host,port))
+    except:
+       return False
     else:
-        return False
+       sock.close()
+       return True
 
 def get_IP():
     #Get the IP of the laptop
     #This will be used to scan the subnet
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0)
+    s.settimeout(1)
     try:
         s.connect(('23.131.45.231', 1))
         IP = s.getsockname()[0]
