@@ -85,7 +85,7 @@ class Interpreter:
                 if(distance > 0):
                     husky.MoveForward(distance*self.unit_of_length)
                 elif(distance < 0):
-                    husky.MoveBackward(distance*self.unit_of_length)
+                    husky.MoveBackward(abs(distance*self.unit_of_length))
             elif(line.split(" ")[0] == "TURN"):
                 husky.Rotate(float(line.split(" ")[1]))
             elif(line.split(" ")[0] == "WAIT"):

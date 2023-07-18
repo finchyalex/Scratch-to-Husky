@@ -24,6 +24,8 @@ class Husky:
         self.odom = Odometry()
         self.rotation = 0
 
+    
+
     def __del__(self):
         #Stop the husky when the program is ended
         twist = Twist()
@@ -104,6 +106,7 @@ class Husky:
             self.pub.publish(twist)
             self.rate.sleep()
             distance_to_move = distance - math.sqrt((self.odom.pose.pose.position.x - current_x)**2 + (self.odom.pose.pose.position.y - current_y)**2)
+            print(distance_to_move)
         twist.linear.x = 0
         self.pub.publish(twist)
         print("Done")
@@ -122,15 +125,13 @@ class Husky:
         vel = 0.5
         current_angle = self.rotation
         input_angle = angle*math.pi/180
-        target_rad = current_angle + input_angle
-        print("target={target_rad} current:{self.rotation}", target_rad,self.rotation)
-        #Ensure the target angle is between -pi and pi
+        target_rad = current_angle + input_angle        #Ensure the target angle is between -pi and pi
         if(target_rad > math.pi):
             target_rad = target_rad - 2*math.pi
         elif(target_rad < -math.pi):
             target_rad = target_rad + 2*math.pi
         res = 0.1
-        print("target={target_rad} current:{self.rotation}", target_rad,self.rotation)
+        print("target=" + target_rad, " rotation=" + self.rotation)
 
         while not rospy.is_shutdown():
             #quat = quaternion_from_euler (roll, pitch,yaw)
@@ -144,11 +145,22 @@ class Husky:
         self.pub.publish(twist)
         print("Done")
 
+
+    def RotateTo(self,angle):
+        pass
+
     def RotateConstant(self,angle):
         #This is used to rotate at a constant speed
         print("Rotating")
         twist = Twist()
         vel = 1
+        #Depending on the angle, we need to rotate clockwise or counterclockwise
+        vel_magnitude = 0
+        if(angle > 0):
+            vel_magnitude = vel
+        else:
+            vel_magnitude = -vel
+        #Use Odometry to rotate
         current_angle = self.rotation
         input_angle = angle*math.pi/180
         target_rad = current_angle + input_angle
@@ -157,18 +169,31 @@ class Husky:
             target_rad = target_rad - 2*math.pi
         elif(target_rad < -math.pi):
             target_rad = target_rad + 2*math.pi
-        res = 0.001
+        res = 0.1
+        #0.1 radians is about 5.7 degrees
+        min_vel = 0.5
+        print(f"Our target is {target_rad} and our current angle is {self.rotation}")
         #Ensure the target angle is between -pi and pi
         
 
         while not rospy.is_shutdown():
-            if(target_rad-self.rotation < res):
+            print(f"target={target_rad} current:{self.rotation}")
+            #We need to stop the spinning when we reach the target angle
+            #Perhaps start slowing down when we are close to the target angle
+            twist.angular.z = vel * abs(target_rad-self.rotation) * vel_magnitude
+            if(twist.angular.z < min_vel):
+                twist.angular.z = min_vel * vel_magnitude
+
+
+            if(abs(target_rad-self.rotation) < res):
+                twist.angular.z = 0
+                self.pub.publish(twist)
                 break
+
             #quat = quaternion_from_euler (roll, pitch,yaw)
             #print quat
-            twist.angular.z = vel
+
             self.pub.publish(twist)
-            print("taeget={} current:{}", target_rad,self.rotation)
             self.rate.sleep()
 
             

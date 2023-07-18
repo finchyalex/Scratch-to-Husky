@@ -36,16 +36,40 @@ BRIGHTREDBG = "\033[41m"
 def FirstMenu(): #Maybe split these into seperate functions
     while(True):
         #Switch statement for the menu
-        print("Welcome to the HuskyTools menu")
+        print(BOLD + BRIGHTMAGENTAFG + "Welcome to the HuskyTools menu")
         print("Here are your options:")
         print("1. Scan and connect to husky")
         print("2. Load previous config and connect to husky")
         print("3. Exit")
-        choice = input("Enter your choice: ")
+        choice = input("Enter your choice: " + SLOWBLINK + "> ")
         if(choice == "1"):
             #Check if permissions are correct, if not attempt to fix them
-            husky = ScanForHusky()
-            return husky
+
+            husky_ip = input("Enter the IP of the husky: ")
+            #Validate the IP by checking if port 11311 is open
+            if(husky_ip == ""):
+                husky = ScanForHusky()
+                return husky
+
+            print("Validating husky IP...")
+            Valid_Husky = CheckPort(husky_ip,11311)
+            if(not Valid_Husky):
+                print("Husky IP invalid")
+                exit()
+            else:
+                print("Husky connected")
+                print("Setting ROS master URI...")
+                #Set the ROS master URI
+                os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
+                #Set the ROS IP
+                laptop_ip = get_IP()
+                os.environ["ROS_IP"] = laptop_ip
+                print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
+                print("ROS IP set to: " + os.environ["ROS_IP"])
+                husky = Husky(10,10,husky_ip)
+                return husky
+
+
         elif(choice == "2"):
             #Check the folder ~/.husky_tools for a config file
             #If the config file exists, load it
@@ -109,18 +133,26 @@ def FirstMenu(): #Maybe split these into seperate functions
         elif(choice == "3"):
             exit()
         else:
-            print("Invalid choice")
-            time.sleep(1)
-            #Clear the screen
-            os.system("clear")
-            #Display the menu again
+            #Attempt to find keyword in the choice
+            #If the keyword is found, run the command
+            if("scan" in choice):
+                husky = ScanForHusky()
+                return husky
+            elif("exit" in choice):
+                exit()
+            else:
+                print("Invalid choice")
+                time.sleep(1)
+                #Clear the screen
+                os.system("clear")
+                #Display the menu again
 
 def ConnectedMenu(husky):
     while(True):
         #How can I make this text green?
         print(GREENFG + "Husky Connected -- IP: " + husky.ip)
         print(WHITEFG + "Here are your options:")
-        print("1. Run a program from .sb3 (Scratch)")
+        print("1. Run a program from a .sb3 file (Scratch)")
         print("2. Run a program from a .husky file")
         print("3. Run a program from a .py file")
         print("4. Enter HuskyTools Shell")
@@ -207,8 +239,10 @@ class HuskyShell(): #AT SOME POINT WRITE PROPER COMMAND PARSEING
             elif(command == "rotate"):
                 #Rotate the husky
                 #Get the angle
+
                 angle = arguments[0]
-                self.Rotate(int(angle))
+                print(angle)
+                self.husky.Rotate(float(angle))
 
 
     
@@ -237,7 +271,7 @@ class HuskyShell(): #AT SOME POINT WRITE PROPER COMMAND PARSEING
         pass
 
 
-    #Movement commands
+    #Break each command into a seperate function
     def MoveForward(self,distance):
         self.husky.MoveForward(distance)
 
@@ -272,8 +306,8 @@ def ScanForHusky():
     if(check_local == "y"):
         local_check = True
     print("Scanning subnet for husky...")
-    #husky_ip = scan(laptop_ip,30,True,include_laptop=local_check)
-    husky_ip = "10.10.120.159" #TEMPORARY
+    husky_ip = scan(laptop_ip,30,True,include_laptop=local_check)
+    #husky_ip = "10.10.120.159" #TEMPORARY
     if(husky_ip == ""):
         print("Husky not found")
         #Allow user to enter IP manually if husky is not found

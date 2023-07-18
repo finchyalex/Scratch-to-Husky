@@ -25,7 +25,7 @@ BRIGHTREDBG = "\033[41m"
 
 def DisplaySplash():
 
-    splash_text = BRIGHTMAGENTAFG + """
+    splash_text = BLUEFG + """
   _    _           _       _______          _     
  | |  | |         | |     |__   __|        | |    
  | |__| |_   _ ___| | ___   _| | ___   ___ | |___ 
