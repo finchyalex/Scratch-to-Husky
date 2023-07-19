@@ -16,12 +16,14 @@
 from ..husky_python.husky import Husky
 
 class Interpreter:
-    def __init__(self, file_name, unit_of_length, target_husky : Husky, output_location=None):
+    def __init__(self, unit_of_length, target_husky : Husky, output_location=None, file_name=None,commands=None):
         if(output_location) == None:
-            self.output_location = file_name.split(".")[0] + ".py"
+            if(file_name != None):
+                self.output_location = file_name.split(".")[0] + ".py"
         if(target_husky == None):
             print("No target husky, outputting to python file")
         self.file_name = file_name
+        self.commands = commands
         self.unit_of_length = unit_of_length
         self.target_husky = target_husky
 
@@ -29,8 +31,11 @@ class Interpreter:
         #Open the file and check for syntax errors
         #If there are syntax errors, print them and exit
         #If there are no syntax errors, continue
-        file = open(self.file_name, "r")
-        lines = file.readlines()
+        if(self.file_name != None):
+            file = open(self.file_name, "r")
+            lines = file.readlines()
+        elif(self.commands != None):
+            lines = self.commands
         for line in lines:
             if(line.split(" ")[0] == "MOVE"):
                 try:
@@ -67,9 +72,13 @@ class Interpreter:
     def interpret(self,write_to_file=False):
         if(not self.__validate__):
             print("Syntax error")
-        file = open(self.file_name, "r")
-        lines = file.readlines()
-        self.run(lines)
+        if(self.file_name != None):
+            file = open(self.file_name, "r")
+            lines = file.readlines()
+            self.run(lines)
+        elif(self.commands != None):
+            self.run(self.commands)
+
 
     def run(self, lines):
         husky : Husky = self.target_husky 

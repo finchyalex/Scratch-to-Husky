@@ -12,109 +12,111 @@ import os
 #Unzip the file
 
 
-from translation import convertCommand
+from ScratchTools.translation import convertCommand
 
 
 import zipfile
 
-allowed_commands = ["event_whenflagclicked","motion_movesteps","motion_turnright","motion_turnleft","control_wait","control_repeat"] #These are the allowed scratch commands I might include more later
-#These will be translated to a middle language that the next program to control the robot will understand
+def ConvertFromScratch(file_input):
 
-#Map each allowed command to an output command later
+    allowed_commands = ["event_whenflagclicked","motion_movesteps","motion_turnright","motion_turnleft","control_wait","control_repeat"] #These are the allowed scratch commands I might include more later
+    #These will be translated to a middle language that the next program to control the robot will understand
 
-#Get the file input
-#Check if sys.argv[1] exists
-if len(sys.argv) < 2:
-    print("No file input")
-    exit()
-file_input = sys.argv[1]
-#If the file input is not a JSON file, then exit
+    #Map each allowed command to an output command later
 
-#see if file exists
-if not os.path.exists(file_input):
-    print("File does not exist")
-    exit()
+    #Get the file input
+    #Check if sys.argv[1] exists
+    if file_input == None:
+        print("No file input")
+        exit()
+    #If the file input is not a JSON file, then exit
 
-zip = zipfile.ZipFile(file_input)
+    #see if file exists
+    if not os.path.exists(file_input):
+        print("File does not exist")
+        exit()
 
-#Get the name of the file
-file_name = os.path.basename(file_input)
-#Remove the extension
-file_name = os.path.splitext(file_name)[0]
+    zip = zipfile.ZipFile(file_input)
 
-zip.extractall(file_name)
-#get the json file from the zip file
-#Remove all the files except the json file
-for file in os.listdir(file_name):
-    if not file.endswith(".json"):
-        os.remove(os.path.join(file_name, file))
-file_input = file_name + "/project.json"
+    #Get the name of the file
+    file_name = os.path.basename(file_input)
+    #Remove the extension
+    file_name = os.path.splitext(file_name)[0]
+
+    zip.extractall(file_name)
+    #get the json file from the zip file
+    #Remove all the files except the json file
+    for file in os.listdir(file_name):
+        if not file.endswith(".json"):
+            os.remove(os.path.join(file_name, file))
+    file_input = file_name + "/project.json"
 
 
-print("Converting file: " + file_input)
+    print("Converting file: " + file_input)
 
-#Convert the file to a json object
-json_file = open(file_input)
-json_object = json.load(json_file)
+    #Convert the file to a json object
+    json_file = open(file_input)
+    json_object = json.load(json_file)
 
-#The object is a list of targets
-#Print the name of each target
+    #The object is a list of targets
+    #Print the name of each target
 
-#Lets see if the husky target exists
-husky_target = None
-for target in json_object["targets"]:
-    if target["name"] == "Husky":
-        husky_target = target
-        break
+    #Lets see if the husky target exists
+    husky_target = None
+    for target in json_object["targets"]:
+        if target["name"] == "Husky":
+            husky_target = target
+            break
 
-if husky_target == None:
-    print("The husky target does not exist")
-    exit()
+    if husky_target == None:
+        print("The husky target does not exist")
+        exit()
 
-#Now let's figure out the movement commands in order, the first command should be the event_whenflagclicked command
+    #Now let's figure out the movement commands in order, the first command should be the event_whenflagclicked command
 
-#get the event_whenflagclicked command
-event_whenflagclicked_command = None
-for command in husky_target["blocks"]:
-    if husky_target["blocks"][command]["opcode"] == "event_whenflagclicked":
-        event_whenflagclicked_command = husky_target["blocks"][command]
-        break
+    #get the event_whenflagclicked command
+    event_whenflagclicked_command = None
+    for command in husky_target["blocks"]:
+        if husky_target["blocks"][command]["opcode"] == "event_whenflagclicked":
+            event_whenflagclicked_command = husky_target["blocks"][command]
+            break
 
-if event_whenflagclicked_command == None:
-    print("There is no start command")
-    exit()
+    if event_whenflagclicked_command == None:
+        print("There is no start command")
+        exit()
 
-#Now we need to get the next command
+    #Now we need to get the next command
 
-#Continue getting next command until the next command is null
-CurrentCommand = event_whenflagclicked_command
-IsNextCommand = True
+    #Continue getting next command until the next command is null
+    CurrentCommand = event_whenflagclicked_command
+    IsNextCommand = True
 
-Commands = []
+    Commands = []
 
-while IsNextCommand:
-    if(CurrentCommand["next"] == None):
-        IsNextCommand = False
-        break
-    next_command_id = CurrentCommand["next"]
-    next_command = husky_target["blocks"][next_command_id]
-    CurrentCommand = next_command
-    #Get Inputs of the current command
-    OutputCommands = convertCommand(CurrentCommand, husky_target)
-    Commands.extend(OutputCommands)
+    while IsNextCommand:
+        if(CurrentCommand["next"] == None):
+            IsNextCommand = False
+            break
+        next_command_id = CurrentCommand["next"]
+        next_command = husky_target["blocks"][next_command_id]
+        CurrentCommand = next_command
+        #Get Inputs of the current command
+        OutputCommands = convertCommand(CurrentCommand, husky_target)
+        Commands.extend(OutputCommands)
 
-    #Add the command to a list we can output later
+        #Add the command to a list we can output later
 
-#Write the commands to a file
-#The command with be .husky
-#Create new file
-file_output = file_input.split(".")[0] + ".husky"
-print("Writing to file: " + file_output)
-output_file = open(file_output, "w+")
-#Write the commands to the file
-print(Commands)
-for command in Commands:
-    output_file.write(command + "\n")
-#Close the file
-output_file.close()
-#Delete the scratch project
+    #Write the commands to a file
+    #The command with be .husky
+    #Create new file
+    file_output = file_input.split(".")[0] + ".husky"
+    print("Writing to file: " + file_output)
+    output_file = open(file_output, "w+")
+    #Write the commands to the file
+    print(Commands)
+    for command in Commands:
+        output_file.write(command + "\n")
+    #Close the file
+    output_file.close()
+    return Commands
+    #Delete the scratch project

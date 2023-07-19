@@ -7,7 +7,8 @@ import os
 from husky_tools.husky_python.husky import Husky
 from husky_tools.translation.interpreter import Interpreter
 import time
-from ascii_splash import DisplaySplash
+from husky_tools.visual_tools.ascii_splash import DisplaySplash
+from ScratchTools.convert import ConvertFromScratch
 import threading
 import math 
 
@@ -31,107 +32,112 @@ BLUEFG = "\033[34m"
 BRIGHTMAGENTAFG = "\033[95m"
 BRIGHTBLUEFG = "\033[94m"
 BRIGHTREDBG = "\033[41m"
+#Put these in their our file
 
+
+
+def ScanOrConnect():
+    #Check if permissions are correct, if not attempt to fix them
+
+    husky_ip = input("Enter the IP of the husky: (Press enter to scan for husky) ")
+    #Validate the IP by checking if port 11311 is open
+    if(husky_ip == ""):
+        husky = ScanForHusky()
+        return husky
+
+    print("Validating husky IP...")
+    Valid_Husky = CheckPort(husky_ip,11311)
+    if(not Valid_Husky):
+        print("Husky IP invalid")
+        exit()
+    else:
+        print("Husky connected")
+        print("Setting ROS master URI...")
+        #Set the ROS master URI
+        os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
+        #Set the ROS IP
+        laptop_ip = get_IP()
+        os.environ["ROS_IP"] = laptop_ip
+        print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
+        print("ROS IP set to: " + os.environ["ROS_IP"])
+        husky = Husky(10,10,husky_ip)
+        return husky
+
+def LoadPreviousConfig():
+    #Check the folder ~/.husky_tools for a config file
+    #If the config file exists, load it
+    #If the config file does not exist, exit
+    #First check directory exists, if not create it
+    if(not os.path.exists(os.path.expanduser("~/.husky_tools"))):
+        os.mkdir(os.path.expanduser("~/.husky_tools"))
+    #Check if the config file exists, if not exit
+    #The file name will be config-<husky_ip> so check for all files starting with config-
+    config_files = os.listdir(os.path.expanduser("~/.husky_tools"))
+    config_file_found = False
+    config_files_found = []
+    for file in config_files:
+        if(file.startswith("config-")):
+            config_file_found = True
+            config_files_found.append(file)
+    if(not config_file_found):
+        print("No config files found")
+        exit()
+    #If there is more than one config file, ask the user which one to use
+    if(len(config_files_found) > 1):
+        print("Multiple config files found, please choose one:")
+        for i in range(0,len(config_files_found)):
+            print(str(i) + ". " + config_files_found[i])
+        choice = input("Enter your choice: ")
+        config_file = config_files_found[int(choice)]
+    else:
+        config_file = config_files_found[0]
+    #Load the config file
+    with open(os.path.expanduser("~/.husky_tools/" + config_file),"r") as f:
+        #Read the file
+        config = f.readlines()
+        #Set the ROS master URI
+        os.environ["ROS_MASTER_URI"] = config[0].split("=")[1]
+        #Set the ROS IP
+        os.environ["ROS_IP"] = config[1].split("=")[1]
+    #Check if the husky is still connected
+    husky_ip = os.environ["ROS_MASTER_URI"].split("//")[1].split(":")[0]
+    print("Checking if husky is still connected...")
+    HuskyConnected = CheckPort(husky_ip,11311)
+    if(not HuskyConnected):
+        print("Husky not found, exiting")
+        exit()
+    else:
+        #This seems to be causing issues TODO FIX THIS
+        print("Husky connected")
+        husky = Husky(10,10,husky_ip)
+        print("Setting ROS master URI...")
+        #Set the ROS master URI
+        os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
+        #Set the ROS IP
+        laptop_ip = get_IP()
+        os.environ["ROS_IP"] = laptop_ip
+        print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
+        print("ROS IP set to: " + os.environ["ROS_IP"])
+        return husky
+
+def DisplayFirstMenu():
+    print(BOLD + BRIGHTMAGENTAFG + "Welcome to the HuskyTools menu")
+    print("Here are your options:")
+    print("1. Directly connect to Husky or Scan and connect to Husky")
+    print("2. Load previous Config and connect to husky")
+    print("3. Exit")
 
 def FirstMenu(): #Maybe split these into seperate functions
     while(True):
         #Switch statement for the menu
-        print(BOLD + BRIGHTMAGENTAFG + "Welcome to the HuskyTools menu")
-        print("Here are your options:")
-        print("1. Scan and connect to husky")
-        print("2. Load previous config and connect to husky")
-        print("3. Exit")
-        choice = input("Enter your choice: " + SLOWBLINK + "> ")
+        DisplayFirstMenu()
+        choice = input("Enter your choice: " + SLOWBLINK + "> " + NOBLINK)
         if(choice == "1"):
-            #Check if permissions are correct, if not attempt to fix them
-
-            husky_ip = input("Enter the IP of the husky: ")
-            #Validate the IP by checking if port 11311 is open
-            if(husky_ip == ""):
-                husky = ScanForHusky()
-                return husky
-
-            print("Validating husky IP...")
-            Valid_Husky = CheckPort(husky_ip,11311)
-            if(not Valid_Husky):
-                print("Husky IP invalid")
-                exit()
-            else:
-                print("Husky connected")
-                print("Setting ROS master URI...")
-                #Set the ROS master URI
-                os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
-                #Set the ROS IP
-                laptop_ip = get_IP()
-                os.environ["ROS_IP"] = laptop_ip
-                print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
-                print("ROS IP set to: " + os.environ["ROS_IP"])
-                husky = Husky(10,10,husky_ip)
-                return husky
-
-
+            return ScanOrConnect() #This will either exit or return a husky object, maybe change this?
         elif(choice == "2"):
-            #Check the folder ~/.husky_tools for a config file
-            #If the config file exists, load it
-            #If the config file does not exist, exit
-            #First check directory exists, if not create it
-            if(not os.path.exists(os.path.expanduser("~/.husky_tools"))):
-                os.mkdir(os.path.expanduser("~/.husky_tools"))
-            #Check if the config file exists, if not exit
-            #The file name will be config-<husky_ip> so check for all files starting with config-
-            config_files = os.listdir(os.path.expanduser("~/.husky_tools"))
-            config_file_found = False
-            config_files_found = []
-            for file in config_files:
-                if(file.startswith("config-")):
-                    config_file_found = True
-                    config_files_found.append(file)
-            if(not config_file_found):
-                print("No config files found")
-                exit()
-            #If there is more than one config file, ask the user which one to use
-            if(len(config_files_found) > 1):
-                print("Multiple config files found, please choose one:")
-                for i in range(0,len(config_files_found)):
-                    print(str(i) + ". " + config_files_found[i])
-                choice = input("Enter your choice: ")
-                config_file = config_files_found[int(choice)]
-            else:
-                config_file = config_files_found[0]
-            #Load the config file
-            with open(os.path.expanduser("~/.husky_tools/" + config_file),"r") as f:
-                #Read the file
-                config = f.readlines()
-                #Set the ROS master URI
-                os.environ["ROS_MASTER_URI"] = config[0].split("=")[1]
-                #Set the ROS IP
-                os.environ["ROS_IP"] = config[1].split("=")[1]
-            #Check if the husky is still connected
-            husky_ip = os.environ["ROS_MASTER_URI"].split("//")[1].split(":")[0]
-            print("Checking if husky is still connected...")
-            HuskyConnected = CheckPort(husky_ip,11311)
-            if(not HuskyConnected):
-                print("Husky not found, exiting")
-                exit()
-            else:
-                #This seems to be causing issues TODO FIX THIS
-                print("Husky connected")
-                husky = Husky(10,10,husky_ip)
-                print("Setting ROS master URI...")
-                #Set the ROS master URI
-                os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
-                #Set the ROS IP
-                laptop_ip = get_IP()
-                os.environ["ROS_IP"] = laptop_ip
-                print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
-                print("ROS IP set to: " + os.environ["ROS_IP"])
-                return husky
-
-
-
-            exit()
+            return LoadPreviousConfig() #This will either exit or return a husky object from config
         elif(choice == "3"):
-            exit()
+            exit() #Exit the program
         else:
             #Attempt to find keyword in the choice
             #If the keyword is found, run the command
@@ -140,12 +146,40 @@ def FirstMenu(): #Maybe split these into seperate functions
                 return husky
             elif("exit" in choice):
                 exit()
+            elif("connect" in choice):
+                husky = ScanOrConnect()
+                return husky
+            elif("load" in choice):
+                husky = LoadPreviousConfig()
+                return husky
+            elif("help" in choice):
+                print("Here are your options:")
+                print("1. Directly connect to Husky or Scan and connect to Husky")
+                print("2. Load previous Config and connect to husky")
+                print("3. Exit")
             else:
                 print("Invalid choice")
                 time.sleep(1)
                 #Clear the screen
                 os.system("clear")
                 #Display the menu again
+
+#This converts from Scratch to .husky
+def ReadScratchFile():
+    file_location = input("Enter the location of the .sb3 file: ")
+    
+    #Check file is .sb3 and exists
+    if(not os.path.exists(file_location)):
+        print("File does not exist")
+        return
+    elif(not file_location.endswith(".sb3")):
+        print("File is not a .sb3 file")
+        return
+    else:
+        #Convert the file
+        return ConvertFromScratch(file_location)
+        
+
 
 def ConnectedMenu(husky):
     while(True):
@@ -160,8 +194,12 @@ def ConnectedMenu(husky):
         print("6. Exit")
         choice = input("Enter your choice: ")
         if(choice == "1"):
-            #Enter the location of the .sb3 file
-            pass
+            Commands = ReadScratchFile()
+            if(Commands == None):
+                print("Error converting file")
+            else:
+                interpreter = Interpreter(1,husky,commands=Commands)
+                interpreter.interpret()
         elif(choice == "2"):
             #Please enter location of .husky file
             file_loc = input("Enter location of .husky file: ")
@@ -173,7 +211,7 @@ def ConnectedMenu(husky):
             elif(not file_loc.endswith(".husky")):
                 print("File is not a .husky file")
             else:
-                interpreter = Interpreter(file_loc,1,husky)
+                interpreter = Interpreter(1,husky,file_name=file_loc)
                 interpreter.interpret()
         elif(choice == "3"):
             print("Not implemented yet")
@@ -235,7 +273,8 @@ class HuskyShell(): #AT SOME POINT WRITE PROPER COMMAND PARSEING
                 else:
                     self.husky.MoveBackward(abs(distance))
             elif(command == "exit"):
-                exit()
+                #Exit the shell
+                break
             elif(command == "rotate"):
                 #Rotate the husky
                 #Get the angle
@@ -289,13 +328,8 @@ def CheckConnection(husky,status : dict):
     status["HuskyConnected"] = False
     
 
-        
-
 def ScanForHusky():
-    print("-Starting Husky Scan-")
-
-
-
+    print("----Starting Husky Scan----")
     #Get the IP of the used device, assume the husky is on the same subnet
     print("Getting IP of of current device...")
     laptop_ip = get_IP()
@@ -343,9 +377,7 @@ def ScanForHusky():
     print("ROS IP set to: " + os.environ["ROS_IP"])
     #Start the husky
     #Also print out the Linux commands if it does not work
-    print("Can't connect to husky? run this in the terminal:")
-    print("export ROS_MASTER_URI=" + os.environ["ROS_MASTER_URI"])
-    print("export ROS_IP=" + os.environ["ROS_IP"])
+
     husky = Husky(10,10,husky_ip) #This may change when I redo the husky class
     return husky
 
@@ -358,12 +390,8 @@ def main():
     time.sleep(2)
     #Clear the screen
     os.system("clear")
-
     ConnectedMenu(husky)
     
-
-    
-
 def scan(laptop_ip,timeout_limit=1,show_devices=False,include_laptop=True):
     timeout = 1
     Searching = True
@@ -386,6 +414,8 @@ def scan(laptop_ip,timeout_limit=1,show_devices=False,include_laptop=True):
         #This will return the IP of the husky#
         #Remove last octet of IP
         #Scan the subnet
+        #This doesn't seem to return everything, maybe try a different method
+        #Weirdly a bash arp-scan -a seems to return more devices
         arp_request = scapy.ARP(pdst=laptop_ip + ".1/24")
         broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
         arp_request_broadcast = broadcast/arp_request
