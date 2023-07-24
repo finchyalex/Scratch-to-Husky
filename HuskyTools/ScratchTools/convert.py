@@ -119,4 +119,4 @@ def ConvertFromScratch(file_input):
     #Close the file
     output_file.close()
     return Commands
-    #Delete the scratch project
+    #Maybe add option to delete Scratch file? Probably not

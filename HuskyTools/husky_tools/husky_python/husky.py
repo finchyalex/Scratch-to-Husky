@@ -24,6 +24,9 @@ class Husky:
         self.odom = Odometry()
         self.last_odem = Odometry()
         self.rotation = 0
+        self.expected_rotation = 0
+        self.expected_x = None
+        self.expected_y = None
         self.inital_x = None
         self.inital_y = None
         #Code for Bounds
@@ -34,6 +37,8 @@ class Husky:
         #Code to see if Husky is moving
         self.is_moving = False
         self.was_moving = False
+
+        #Add a system to adjust the rotation of the husky
 
     
 
@@ -155,6 +160,12 @@ class Husky:
         min_vel = 0.1
         current_x = self.odom.pose.pose.position.x
         current_y = self.odom.pose.pose.position.y
+
+        #Calculate our expected x and y
+        self.expected_x = current_x + distance*math.cos(self.rotation)
+        self.expected_y = current_y + distance*math.sin(self.rotation)
+        #TODO Finish writing a system to adjust the rotation and location of the husky when it is not moving
+
         #Move forward until the distance is reached
         #Should probably add a magnitude to the velocity, it's okay for now
         while(distance_to_move > 0):
@@ -164,7 +175,9 @@ class Husky:
             self.pub.publish(twist)
             self.rate.sleep()
             distance_to_move = distance - math.sqrt((self.odom.pose.pose.position.x - current_x)**2 + (self.odom.pose.pose.position.y - current_y)**2)
-            print(distance_to_move)
+            os.system('clear')
+            print("Moving Forward")
+            print("Remaining Distance: " + str(distance_to_move))
         twist.linear.x = 0
         self.pub.publish(twist)
         print("Done")
@@ -190,7 +203,10 @@ class Husky:
             self.pub.publish(twist)
             self.rate.sleep()
             distance_to_move = distance - math.sqrt((self.odom.pose.pose.position.x - current_x)**2 + (self.odom.pose.pose.position.y - current_y)**2)
-            print(distance_to_move)
+            #Clear the screen
+            os.system('clear')
+            print("Moving Backward")
+            print("Remaining Distance: " + str(distance_to_move))
         twist.linear.x = 0
         self.pub.publish(twist)
         print("Done")
@@ -200,7 +216,7 @@ class Husky:
     def Rotate(self,angle): #Rotate the husky by a certain angle
         self.MovementHandler(0,angle)
         self.RotateConstant(angle)
-        return
+        return #This function is not used yet just for testing
         #JUST FOR TESTING
         #Use the current angle and the target angle to calculate the angle to rotate
         #Use Odometry to rotate
@@ -234,7 +250,7 @@ class Husky:
         pass
 
     def RotateConstant(self,angle):
-        #This is used to rotate at a constant speed
+        #This is used to rotate and will slow down when it gets close to the target angle
         print("Rotating")
         twist = Twist()
         vel = 1
@@ -248,6 +264,7 @@ class Husky:
         current_angle = self.rotation
         input_angle = angle*math.pi/180
         target_rad = current_angle + input_angle
+        self.expected_rotation = target_rad
         #Our target can't be more than 2pi or less than -2pi
         if(target_rad > math.pi):
             target_rad = target_rad - 2*math.pi

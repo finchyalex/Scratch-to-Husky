@@ -37,8 +37,6 @@ BRIGHTREDBG = "\033[41m"
 
 
 def ScanOrConnect():
-    #Check if permissions are correct, if not attempt to fix them
-
     husky_ip = input("Enter the IP of the husky: (Press enter to scan for husky) ")
     #Validate the IP by checking if port 11311 is open
     if(husky_ip == ""):
@@ -125,7 +123,8 @@ def DisplayFirstMenu():
     print("Here are your options:")
     print("1. Directly connect to Husky or Scan and connect to Husky")
     print("2. Load previous Config and connect to husky")
-    print("3. Exit")
+    print("3. Convert a Scratch file to a .husky file")
+    print("4. Exit")
 
 def FirstMenu(): #Maybe split these into seperate functions
     while(True):
@@ -136,8 +135,17 @@ def FirstMenu(): #Maybe split these into seperate functions
             return ScanOrConnect() #This will either exit or return a husky object, maybe change this?
         elif(choice == "2"):
             return LoadPreviousConfig() #This will either exit or return a husky object from config
-        elif(choice == "3"):
+        elif(choice == "4"):
             exit() #Exit the program
+        elif(choice == "3"):
+            #Get a location of a .sb3 file
+            #Convert the file
+            #Save the file
+            #Exit
+            Commands = ReadScratchFile()
+            #This should write the commands to a file
+
+
         else:
             #Attempt to find keyword in the choice
             #If the keyword is found, run the command
@@ -382,6 +390,7 @@ def ScanForHusky():
     return husky
 
 def main():
+
     #Display the splash screen
     DisplaySplash()
     #TODO Add a load config option

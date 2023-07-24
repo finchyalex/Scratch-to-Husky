@@ -13,6 +13,8 @@
 #To Initialize the interpreter, you must pass in the file name of the .husky file
 #The interpreter must also be passed a value to represent a unit of length, for example, 1 unit of length could be 1 inch
 
+#I'd like to build CLI UI or web UI for this at some point
+
 from ..husky_python.husky import Husky
 
 class Interpreter:
