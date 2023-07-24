@@ -254,8 +254,8 @@ class Husky:
         elif(target_rad < -math.pi):
             target_rad = target_rad + 2*math.pi
         res = 0.01
-        #0.1 radians is about 5.7 degrees
-        min_vel = 0.5
+        #0.01 radians is about 0.5 degrees
+        min_vel = 0.3
         print(f"Our target is {target_rad} and our current angle is {self.rotation}")
         #Ensure the target angle is between -pi and pi
         
