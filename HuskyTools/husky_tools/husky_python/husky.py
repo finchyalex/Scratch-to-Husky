@@ -9,8 +9,6 @@ from tf.transformations import  euler_from_quaternion
 
 class Husky:
 
-    #TODO HUSKY SHELL WORKS FINE TO CONTROL HUSKY
-    #HOWEVER, WHEN RUNNING FROM SCRATCH ISSUES ARISE
 
     def __init__(self,BOUNDS_WIDTH,BOUNDS_HEIGHT,husky_ip):
         rospy.init_node('husky', anonymous=True)

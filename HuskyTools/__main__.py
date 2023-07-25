@@ -191,7 +191,7 @@ def ReadScratchFile():
 
 def ConnectedMenu(husky):
     while(True):
-        #How can I make this text green?
+        #Print the menu
         print(GREENFG + "Husky Connected -- IP: " + husky.ip)
         print(WHITEFG + "Here are your options:")
         print("1. Run a program from a .sb3 file (Scratch)")

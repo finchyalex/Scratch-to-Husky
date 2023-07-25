@@ -1,4 +1,5 @@
 import socket
+#This code can be used to find the IP of a husky on a network but isn't used in the project
 
 def check(host,port,timeout=2):
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM) #presumably 
