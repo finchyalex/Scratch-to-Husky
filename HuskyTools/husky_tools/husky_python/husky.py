@@ -22,7 +22,8 @@ class Husky:
         self.odom = Odometry()
         self.last_odem = Odometry()
         self.rotation = 0
-        self.expected_rotation = 0
+        self.expected_rotation = None
+        self.offset_rotation = 0
         self.expected_x = None
         self.expected_y = None
         self.inital_x = None
@@ -57,6 +58,7 @@ class Husky:
         if(self.inital_x == None):
             self.inital_x = msg.pose.pose.position.x
             self.inital_y = msg.pose.pose.position.y
+            self.expected_rotation = self.rotation
             #Using this and our bounds, we can determine the max x and y values
             self.max_x = self.inital_x + self.BOUNDS_WIDTH/2
             self.max_y = self.inital_y + self.BOUNDS_HEIGHT/2
@@ -149,6 +151,10 @@ class Husky:
     #Move the husky forwards a certain distance
     def MoveForward(self,distance):
         self.MovementHandler(distance,0)
+
+
+        
+
         print("Moving")
         #Use Odometry to move forward
         #Move forward  for a certain distance
@@ -182,7 +188,7 @@ class Husky:
 
     #Move the husky forwards a certain distance
     def MoveBackward(self,distance):
-        self.MovementHandler(distance,0)
+        self.MovementHandler(-distance,0)
         print("Moving")
         #Use Odometry to move backward
         #Move backward for a certain distance
@@ -213,49 +219,75 @@ class Husky:
     def RotateTo(self,angle):
         pass
 
-    def Rotate(self,angle):
+    def Rotate(self,angle,offset_rotate=False,auto_fix=False):
         self.MovementHandler(0,angle) #This will ensure the husky has stopped moving before rotating
         #This is used to rotate and will slow down when it gets close to the target angle
+        if(abs(self.offset_rotation) >= 5 and not offset_rotate and auto_fix):
+            print("Rotation offset exceeded, adjusting!")
+            self.Rotate(-self.offset_rotation,True)
+            self.offset_rotate = 0
+            input("Press any key to continue!")
+
+        
         print("Rotating")
         twist = Twist()
         vel = 1
         #Depending on the angle, we need to rotate clockwise or counterclockwise
         vel_magnitude = 0
         if(angle > 0):
-            vel_magnitude = vel
+            vel_magnitude = 1
         else:
-            vel_magnitude = -vel
+            vel_magnitude = -1
         #Use Odometry to rotate
         current_angle = self.rotation
         input_angle = angle*math.pi/180
         target_rad = current_angle + input_angle
-        self.expected_rotation = target_rad
+        self.expected_rotation = self.expected_rotation + input_angle
+        if(self.expected_rotation > math.pi):
+            self.expected_rotation = self.expected_rotation - 2*math.pi
+        elif(self.expected_rotation < -math.pi):
+            self.expected_rotation = self.expected_rotation + 2*math.pi
+
+
         #Our target can't be more than 2pi or less than -2pi
         if(target_rad > math.pi):
             target_rad = target_rad - 2*math.pi
         elif(target_rad < -math.pi):
             target_rad = target_rad + 2*math.pi
-        res = 0.01
-        #0.01 radians is about 0.5 degrees
-        min_vel = 0.3
+        res = 0.05
+        #0.01 radians is about 2.5 degrees
+        min_vel = 0.2
         print(f"Our target is {target_rad} and our current angle is {self.rotation}")
         #Ensure the target angle is between -pi and pi
         
 
         while not rospy.is_shutdown():
-            print(f"target={target_rad} current:{self.rotation}")
+            
             #We need to stop the spinning when we reach the target angle
             #Perhaps start slowing down when we are close to the target angle
             twist.angular.z = vel * abs(target_rad-self.rotation) * vel_magnitude
-            if(twist.angular.z < abs(min_vel)):
+            if(abs(twist.angular.z) > vel):
+                twist.angular.z = vel * vel_magnitude
+
+            if(abs(twist.angular.z) < min_vel):
                 twist.angular.z = min_vel * vel_magnitude
 
 
             if(abs(target_rad-self.rotation) < res):
                 twist.angular.z = 0
+                #Calculate offset
                 self.pub.publish(twist)
+                diff = self.rotation-self.expected_rotation
+                if(diff > math.pi):
+                    diff = diff - 2*math.pi
+                elif(diff < -math.pi):
+                    diff = diff + 2*math.pi
+                self.offset_rotation = diff/(math.pi/180)
+                print(self.offset_rotation)
                 break
 
+            print(f"target={target_rad} current:{self.rotation}, speed: {twist.angular.z}")
+            
             #quat = quaternion_from_euler (roll, pitch,yaw)
             #print quat
 
