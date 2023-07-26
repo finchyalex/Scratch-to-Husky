@@ -210,44 +210,11 @@ class Husky:
         print("Done")
 
 
-
-    def Rotate(self,angle): #Rotate the husky by a certain angle
-        self.MovementHandler(0,angle)
-        self.RotateConstant(angle)
-        return #This function is not used yet just for testing
-        #JUST FOR TESTING
-        #Use the current angle and the target angle to calculate the angle to rotate
-        #Use Odometry to rotate
-        #Rotate until the angle is reached
-        twist = Twist()
-        vel = 0.5
-        current_angle = self.rotation
-        input_angle = angle*math.pi/180
-        target_rad = current_angle + input_angle        #Ensure the target angle is between -pi and pi
-        if(target_rad > math.pi):
-            target_rad = target_rad - 2*math.pi
-        elif(target_rad < -math.pi):
-            target_rad = target_rad + 2*math.pi
-        res = 0.1
-        print("target=" + target_rad, " rotation=" + self.rotation)
-
-        while not rospy.is_shutdown():
-            #quat = quaternion_from_euler (roll, pitch,yaw)
-            #print quat
-            twist.angular.z = vel * (target_rad-self.rotation)
-            self.pub.publish(twist)
-
-            self.rate.sleep()
-        
-        twist.angular.z = 0
-        self.pub.publish(twist)
-        print("Done")
-
-
     def RotateTo(self,angle):
         pass
 
-    def RotateConstant(self,angle):
+    def Rotate(self,angle):
+        self.MovementHandler(0,angle) #This will ensure the husky has stopped moving before rotating
         #This is used to rotate and will slow down when it gets close to the target angle
         print("Rotating")
         twist = Twist()
