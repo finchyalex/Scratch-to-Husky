@@ -464,8 +464,7 @@ def CheckPort(host,port,timeout=2):
        return True
 
 def get_IP():
-    #Get the IP of the laptop
-    #This will be used to scan the subnet
+    #Get the IP of device running the program
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(1)
     try:
