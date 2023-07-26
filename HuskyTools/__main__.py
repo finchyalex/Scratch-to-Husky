@@ -107,13 +107,13 @@ def LoadPreviousConfig():
     else:
         #This seems to be causing issues TODO FIX THIS
         print("Husky connected")
-        husky = Husky(10,10,husky_ip)
-        print("Setting ROS master URI...")
         #Set the ROS master URI
         os.environ["ROS_MASTER_URI"] = "http://" + husky_ip + ":11311"
         #Set the ROS IP
         laptop_ip = get_IP()
         os.environ["ROS_IP"] = laptop_ip
+        husky = Husky(10,10,husky_ip)
+        print("Setting ROS master URI...")
         print("ROS master URI set to: " + os.environ["ROS_MASTER_URI"])
         print("ROS IP set to: " + os.environ["ROS_IP"])
         return husky
@@ -260,36 +260,45 @@ class HuskyShell(): #AT SOME POINT WRITE PROPER COMMAND PARSEING
     def __init__(self,husky):
         self.husky = husky
         while(True):
-            print("Starting HuskyTools Shell:")
-            print("--------------------------")
-            print("Type 'help' for a list of commands")
-            command_input = input("Command > ")
-            #Split the command into a list
-            command = command_input.split(" ")
-            #Get the command
-            command = command[0]
-            arguments = command_input.split(" ")
-            arguments.pop(0)
-            if(command == "help"):
-                self.DisplayHelp()
-            elif(command == "move"):
-                #Move the husky
-                #Get the distance
-                distance = int(arguments[0])
-                if(distance > 0):
-                    self.husky.MoveForward(distance)
-                else:
-                    self.husky.MoveBackward(abs(distance))
-            elif(command == "exit"):
-                #Exit the shell
-                break
-            elif(command == "rotate"):
-                #Rotate the husky
-                #Get the angle
+            try:
+                print("Starting HuskyTools Shell:")
+                print("--------------------------")
+                print("Type 'help' for a list of commands")
+                command_input = input("Command > ")
+                #Split the command into a list
+                command = command_input.split(" ")
+                #Get the command
+                command = command[0]
+                arguments = command_input.split(" ")
+                arguments.pop(0)
+                if(command == "help"):
+                    self.DisplayHelp()
+                elif(command == "move"):
+                    #Move the husky
+                    #Get the distance
+                    distance = float(arguments[0])
+                    if(abs(distance) > 7):
+                        ans = input("Please confirm distance you want to move is: " + str(distance) + " Y/N: ")
+                        if(not ans == "Y"):
+                            print("Ignoring command")
+                            continue
+                            
+                    if(distance > 0):
+                        self.husky.MoveForward(distance)
+                    else:
+                        self.husky.MoveBackward(abs(distance))
+                elif(command == "exit"):
+                    #Exit the shell
+                    break
+                elif(command == "rotate"):
+                    #Rotate the husky
+                    #Get the angle
 
-                angle = arguments[0]
-                print(angle)
-                self.husky.Rotate(float(angle))
+                    angle = arguments[0]
+                    print(angle)
+                    self.husky.Rotate(float(angle))
+            except:
+                print("Error, try again")
 
 
     

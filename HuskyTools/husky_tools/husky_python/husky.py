@@ -106,6 +106,8 @@ class Husky:
         #Check if the husky is moving
         while(self.is_moving):
             self.rate.sleep()
+        #Stop for about 0.5 seconds this ensures it is stopped
+        time.sleep(0.5)
         #Check if the movement is valid
         #This should block the main thread until the movement is complete
             
@@ -222,12 +224,6 @@ class Husky:
     def Rotate(self,angle,offset_rotate=False,auto_fix=False):
         self.MovementHandler(0,angle) #This will ensure the husky has stopped moving before rotating
         #This is used to rotate and will slow down when it gets close to the target angle
-        if(abs(self.offset_rotation) >= 5 and not offset_rotate and auto_fix):
-            print("Rotation offset exceeded, adjusting!")
-            self.Rotate(-self.offset_rotation,True)
-            self.offset_rotate = 0
-            input("Press any key to continue!")
-
         
         print("Rotating")
         twist = Twist()
@@ -242,7 +238,8 @@ class Husky:
         current_angle = self.rotation
         input_angle = angle*math.pi/180
         target_rad = current_angle + input_angle
-        self.expected_rotation = self.expected_rotation + input_angle
+        if(not offset_rotate):
+            self.expected_rotation = self.expected_rotation + input_angle
         if(self.expected_rotation > math.pi):
             self.expected_rotation = self.expected_rotation - 2*math.pi
         elif(self.expected_rotation < -math.pi):
@@ -254,9 +251,9 @@ class Husky:
             target_rad = target_rad - 2*math.pi
         elif(target_rad < -math.pi):
             target_rad = target_rad + 2*math.pi
-        res = 0.05
+        res = 0.01 # This line decided our resolution of degree, so how close the degree has to be for it to stop
         #0.01 radians is about 2.5 degrees
-        min_vel = 0.2
+        min_vel = 0.1
         print(f"Our target is {target_rad} and our current angle is {self.rotation}")
         #Ensure the target angle is between -pi and pi
         
@@ -283,6 +280,7 @@ class Husky:
                 elif(diff < -math.pi):
                     diff = diff + 2*math.pi
                 self.offset_rotation = diff/(math.pi/180)
+                print(self.expected_rotation/(math.pi/180))
                 print(self.offset_rotation)
                 break
 
@@ -291,9 +289,14 @@ class Husky:
             #quat = quaternion_from_euler (roll, pitch,yaw)
             #print quat
 
+
+
             self.pub.publish(twist)
             self.rate.sleep()
 
+        if(abs(self.offset_rotation) >= 5 and (not offset_rotate) and auto_fix):
+            print("Rotation offset exceeded, adjusting!")
+            self.Rotate(-self.offset_rotation,True)
             
     def wait(self,time):
         #Wait for a certain amount of time
