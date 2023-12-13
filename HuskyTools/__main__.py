@@ -222,7 +222,7 @@ def ReadScratchFile():
     #  Make the entire file path
     file_name = scratch_dir + "/" + file_name
 
-    return ConvertFromScratch(file_location)
+    return ConvertFromScratch(file_name)
         
 
 
