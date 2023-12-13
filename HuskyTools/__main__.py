@@ -437,6 +437,10 @@ def ScanForHusky():
 
 def main():
 
+    scratch_dir = "ScratchProjects"
+    if not os.path.exists(scratch_dir):
+        os.mkdir(scratch_dir)
+
     #Display the splash screen
     DisplaySplash()
     #TODO Add a load config option
