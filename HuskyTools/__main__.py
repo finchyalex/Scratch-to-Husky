@@ -174,18 +174,55 @@ def FirstMenu(): #Maybe split these into seperate functions
 
 #This converts from Scratch to .husky
 def ReadScratchFile():
-    file_location = input("Enter the location of the .sb3 file: ")
-    
-    #Check file is .sb3 and exists
-    if(not os.path.exists(file_location)):
-        print("File does not exist")
-        return
-    elif(not file_location.endswith(".sb3")):
-        print("File is not a .sb3 file")
-        return
-    else:
-        #Convert the file
-        return ConvertFromScratch(file_location)
+    scratch_dir = "ScratchProjects"
+    if not os.path.exists(scratch_dir):
+        os.mkdir(scratch_dir)
+
+    #Search the directory for any files that end with .sb3
+    #If there are no files that end with .sb3, then exit
+    #If there are multiple files that end with .sb3, then ask the user which file they want to convert
+
+    #List all the files in the directory
+    files = os.listdir(scratch_dir)
+    #Get all the files that end with .sb3
+    files = [file for file in files if file.endswith(".sb3")]
+    #If there are no files that end with .sb3, then exit
+    if len(files) == 0:
+        print("No files that end with .sb3")
+        exit()
+
+    #If there are multiple files that end with .sb3, then ask the user which file they want to convert
+    if len(files) > 1:
+        print("Multiple files that end with .sb3")
+        print("Which file do you want to convert?")
+        #Number each file
+        for i in range(len(files)):
+            print(str(i) + ": " + files[i])
+        #Get the file input
+        input = input("Enter the number of the file you want to convert: ")
+        #Check if the input is a number
+        try:
+            input = int(input)
+        except:
+            print("Input is not a number")
+            exit()
+        #Check if the input is in the range of the files
+        if input < 0 or input >= len(files):
+            print("Input is not in the range of the files")
+            exit()
+        #Get the file name
+
+        file_name = files[input]
+
+    #If there is only one file that ends with .sb3, then use that file
+    if len(files) == 1:
+        file_name = files[0]
+
+    #Convert the file
+    #  Make the entire file path
+    file_name = scratch_dir + "/" + file_name
+
+    return ConvertFromScratch(file_location)
         
 
 
